@@ -1,0 +1,60 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+// Settings & Locals
+Route::prefix('v1')->group(function () {
+    Route::prefix('public')->group(function () {
+        // Find availability for a given Local based on category
+        Route::get('/locals/{local:slug}/availability', [\App\Http\Controllers\Api\V1\Public\BookingController::class, 'getAvailability']);
+
+        // Lock a court
+        Route::post('/locals/{local:slug}/bookings/lock', [\App\Http\Controllers\Api\V1\Public\BookingController::class, 'createLock']);
+
+        // Confirm booking
+        Route::post('/locals/{local:slug}/bookings/confirm', [\App\Http\Controllers\Api\V1\Public\BookingController::class, 'confirm']);
+    });
+});
+
+// Admin Routes (Protected)
+Route::prefix('v1/admin')->group(function () {
+
+    // Auth Login
+    Route::post('/login', [\App\Http\Controllers\Api\V1\Admin\AuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Super Admin only routes (all-access)
+        // Example logic for managing locals (currently not implemented in Controller but protected here)
+        Route::middleware('ability:all-access')->group(function () {
+            Route::apiResource('locals', \App\Http\Controllers\Api\V1\Admin\LocalController::class);
+        });
+
+        // Local Admin or Super Admin routes (requires at least local-access or all-access)
+        Route::middleware('ability:all-access,local-access')->group(function () {
+            // Courts CRUD
+            Route::apiResource('courts', \App\Http\Controllers\Api\V1\Admin\CourtController::class);
+
+            // Bookings Management
+            Route::get('bookings', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'index']);
+            Route::get('bookings/{booking}', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'show']);
+            Route::patch('bookings/{booking}/status', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'updateStatus']);
+        });
+    });
+});
