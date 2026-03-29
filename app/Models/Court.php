@@ -20,6 +20,7 @@ class Court extends Model
         'name',
         'number',
         'price_per_hour',
+        'description',
         'images',
         'status',
     ];

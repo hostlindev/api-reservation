@@ -21,6 +21,20 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Settings & Locals
 Route::prefix('v1')->group(function () {
     Route::prefix('public')->group(function () {
+        // List all locals
+        Route::get('/locals', [\App\Http\Controllers\Api\V1\Public\LocalController::class, 'index']);
+
+        // Show specific local and its active courts
+        Route::get('/locals/{local:slug}', [\App\Http\Controllers\Api\V1\Public\LocalController::class, 'show']);
+
+        // List all courts or show a specific court details globally (Publicly)
+        Route::get('/courts', [\App\Http\Controllers\Api\V1\Public\CourtController::class, 'index']);
+        Route::get('/courts/{court}', [\App\Http\Controllers\Api\V1\Public\CourtController::class, 'show']);
+        
+        // Availability Endpoints for Vue (Calendar and Hours)
+        Route::get('/courts/{court}/available-dates', [\App\Http\Controllers\Api\V1\Public\CourtController::class, 'getAvailableDates']);
+        Route::get('/courts/{court}/available-blocks', [\App\Http\Controllers\Api\V1\Public\CourtController::class, 'getAvailableBlocks']);
+
         // Find availability for a given Local based on category
         Route::get('/locals/{local:slug}/availability', [\App\Http\Controllers\Api\V1\Public\BookingController::class, 'getAvailability']);
 

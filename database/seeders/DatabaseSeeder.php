@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             LocalSeeder::class,
             CourtSeeder::class,
             UserSeeder::class,
+            BookingSeeder::class,
         ]);
     }
 }
