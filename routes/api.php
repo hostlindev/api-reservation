@@ -35,6 +35,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/courts/{court}/available-dates', [\App\Http\Controllers\Api\V1\Public\CourtController::class, 'getAvailableDates']);
         Route::get('/courts/{court}/available-blocks', [\App\Http\Controllers\Api\V1\Public\CourtController::class, 'getAvailableBlocks']);
 
+        // General Unified Availability Endpoint
+        Route::get('/availability', [\App\Http\Controllers\Api\V1\Public\AvailabilityController::class, 'index']);
+
         // Find availability for a given Local based on category
         Route::get('/locals/{local:slug}/availability', [\App\Http\Controllers\Api\V1\Public\BookingController::class, 'getAvailability']);
 

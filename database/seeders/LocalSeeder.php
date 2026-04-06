@@ -13,18 +13,34 @@ class LocalSeeder extends Seeder
      */
     public function run(): void
     {
-        Local::create([
-            'name' => 'Padel Club San Francisco',
-            'slug' => 'padel-club-san-francisco',
-            'address' => 'San Francisco, Calle 50, Panamá',
-            'min_booking_duration' => 60,
-        ]);
+        $scheduleConfig = [
+            "1" => ["is_open" => true, "open_time" => "08:00", "close_time" => "23:00"],
+            "2" => ["is_open" => true, "open_time" => "08:00", "close_time" => "23:00"],
+            "3" => ["is_open" => true, "open_time" => "08:00", "close_time" => "23:00"],
+            "4" => ["is_open" => true, "open_time" => "08:00", "close_time" => "23:00"],
+            "5" => ["is_open" => true, "open_time" => "08:00", "close_time" => "23:59"],
+            "6" => ["is_open" => true, "open_time" => "10:00", "close_time" => "23:59"],
+            "7" => ["is_open" => true, "open_time" => "10:00", "close_time" => "20:00"]
+        ];
 
-        Local::create([
-            'name' => 'Centro Deportivo Costa del Este',
-            'slug' => 'centro-deportivo-costa-del-este',
-            'address' => 'Costa del Este, Av Centenario, Panamá',
-            'min_booking_duration' => 90,
-        ]);
+        Local::updateOrCreate(
+            ['slug' => 'padel-club-san-francisco'],
+            [
+                'name' => 'Padel Club San Francisco',
+                'address' => 'San Francisco, Calle 50, Panamá',
+                'min_booking_duration' => 60,
+                'schedule_config' => json_encode($scheduleConfig),
+            ]
+        );
+
+        Local::updateOrCreate(
+            ['slug' => 'centro-deportivo-costa-del-este'],
+            [
+                'name' => 'Centro Deportivo Costa del Este',
+                'address' => 'Costa del Este, Av Centenario, Panamá',
+                'min_booking_duration' => 90,
+                'schedule_config' => json_encode($scheduleConfig),
+            ]
+        );
     }
 }

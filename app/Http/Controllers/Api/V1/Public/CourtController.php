@@ -48,9 +48,9 @@ class CourtController extends Controller
         return $this->successResponse($court, 'Court retrieved successfully.');
     }
     /**
-     * Devuelve las fechas que tienen al menos un hueco libre de 2 horas.
+     * Devuelve las fechas que tienen al menos un periodo libre según la duración mínima.
      */
-    public function getAvailableDates(Court $court, Request $request)
+    public function getAvailableDates(Court $court, Request $request, \App\Services\AvailabilityService $availabilityService)
     {
         $request->validate([
             'start_date' => 'nullable|date_format:Y-m-d',
@@ -64,10 +64,10 @@ class CourtController extends Controller
         $availableDates = [];
 
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-            $blocks = $this->calculateAvailableBlocks($court, $date);
+            $slots = $availabilityService->getAvailableSlots($court->id, $date->format('Y-m-d'));
             
-            // Si hay al menos un bloque (lo cual ya implica >= 120 min), consideramos el día seleccionable
-            if (count($blocks) > 0) {
+            // Si hay al menos un slot disponible, consideramos el día seleccionable
+            if (count($slots) > 0) {
                 $availableDates[] = $date->format('Y-m-d');
             }
         }
@@ -76,124 +76,28 @@ class CourtController extends Controller
     }
 
     /**
-     * Devuelve los bloques de horas disponibles para un día específico (mínimo 2 horas).
+     * Devuelve los slots de horas 100% fraccionadas y disponibles para un día específico.
      */
-    public function getAvailableBlocks(Court $court, Request $request)
+    public function getAvailableBlocks(Court $court, Request $request, \App\Services\AvailabilityService $availabilityService)
     {
         $request->validate([
             'date' => 'required|date_format:Y-m-d'
         ]);
 
-        $date = \Carbon\Carbon::parse($request->date)->startOfDay();
-        $blocks = $this->calculateAvailableBlocks($court, $date);
+        $slots = $availabilityService->getAvailableSlots($court->id, $request->date);
 
-        return $this->successResponse($blocks, 'Available blocks retrieved successfully.');
-    }
+        // Mapeamos al formato enriquecido para respetar contratos previos de frontend y añadir estandarización.
+        $mappedSlots = array_map(function ($slot) {
+            $startCarbon = \Carbon\Carbon::parse($slot['start_time']);
+            $endCarbon = \Carbon\Carbon::parse($slot['end_time']);
+            return [
+                'inicio'     => $startCarbon->format('h:i A'),
+                'fin'        => $endCarbon->format('h:i A'),
+                'start_time' => $slot['start_time'],
+                'end_time'   => $slot['end_time']
+            ];
+        }, $slots);
 
-    /**
-     * Lógica central de filtrado de intervalos utilizando Carbon.
-     */
-    private function calculateAvailableBlocks(Court $court, \Carbon\Carbon $date)
-    {
-        // Rango operativo: 16:00 a 00:00 (inicio del día siguiente)
-        $startOfDay = $date->copy()->setTime(16, 0, 0);
-        $endOfDay   = $date->copy()->addDay()->setTime(0, 0, 0);
-
-        // Si la hora actual ya superó las 00:00 y estamos consultando el día actual, 
-        // podríamos ajustar para que no devuelva horas pasadas, 
-        // pero evaluemos desde las 16:00 siempre o desde "now()".
-        if ($date->isToday() && now()->max($startOfDay)->lt($endOfDay)) {
-           $startOfDay = now()->max($startOfDay);
-        } else if ($date->isBefore(now()->startOfDay())) {
-            return []; // Día en el pasado
-        }
-
-        // Obtener Reservas y Bloqueos en ese rango
-        $bookings = $court->bookings()
-            ->whereIn('status', ['confirmed', 'pending'])
-            ->where(function ($q) use ($startOfDay, $endOfDay) {
-                $q->whereBetween('start_time', [$startOfDay, $endOfDay])
-                  ->orWhereBetween('end_time', [$startOfDay, $endOfDay])
-                  ->orWhere(function ($sub) use ($startOfDay, $endOfDay) {
-                      $sub->where('start_time', '<=', $startOfDay)
-                          ->where('end_time', '>=', $endOfDay);
-                  });
-            })
-            ->get();
-
-        $locks = $court->bookingLocks()
-            ->where('expires_at', '>', now())
-            ->where(function ($q) use ($startOfDay, $endOfDay) {
-                $q->whereBetween('start_time', [$startOfDay, $endOfDay])
-                  ->orWhereBetween('end_time', [$startOfDay, $endOfDay])
-                  ->orWhere(function ($sub) use ($startOfDay, $endOfDay) {
-                      $sub->where('start_time', '<=', $startOfDay)
-                          ->where('end_time', '>=', $endOfDay);
-                  });
-            })
-            ->get();
-
-        // Juntar y ordenar cronológicamente
-        $occupied = collect();
-        foreach ($bookings as $b) {
-            $occupied->push([
-                'start' => \Carbon\Carbon::parse($b->start_time)->max($startOfDay),
-                'end'   => \Carbon\Carbon::parse($b->end_time)->min($endOfDay)
-            ]);
-        }
-        foreach ($locks as $l) {
-            $occupied->push([
-                'start' => \Carbon\Carbon::parse($l->start_time)->max($startOfDay),
-                'end'   => \Carbon\Carbon::parse($l->end_time)->min($endOfDay)
-            ]);
-        }
-
-        $occupied = $occupied->sortBy('start')->values();
-
-        // Unir reservas solapadas (ej. 16:00-18:00 y 17:30-19:00 -> 16:00-19:00)
-        $mergedOccupied = [];
-        if ($occupied->isNotEmpty()) {
-            $current = $occupied[0];
-            for ($i = 1; $i < $occupied->count(); $i++) {
-                if ($occupied[$i]['start']->lte($current['end'])) {
-                    $current['end'] = $current['end']->max($occupied[$i]['end']);
-                } else {
-                    $mergedOccupied[] = $current;
-                    $current = $occupied[$i];
-                }
-            }
-            $mergedOccupied[] = $current;
-        }
-
-        // Calcular los espacios libres
-        $availableBlocks = [];
-        $currentStart = $startOfDay;
-
-        foreach ($mergedOccupied as $block) {
-            if ($currentStart->lt($block['start'])) {
-                $duration = $currentStart->diffInMinutes($block['start']);
-                // Regla principal: Hueco continuo de mínimo 2 horas (120 minutos)
-                if ($duration >= 120) {
-                    $availableBlocks[] = [
-                        'inicio' => $currentStart->format('h:i A'),
-                        'fin'    => $block['start']->format('H:i') === '00:00' ? '12:00 AM' : $block['start']->format('h:i A')
-                    ];
-                }
-            }
-            $currentStart = $currentStart->max($block['end']);
-        }
-
-        // Evaluar el tramo final del día
-        if ($currentStart->lt($endOfDay)) {
-            $duration = $currentStart->diffInMinutes($endOfDay);
-            if ($duration >= 120) {
-                $availableBlocks[] = [
-                    'inicio' => $currentStart->format('h:i A'),
-                    'fin'    => $endOfDay->format('H:i') === '00:00' ? '12:00 AM' : $endOfDay->format('h:i A')
-                ];
-            }
-        }
-
-        return $availableBlocks;
+        return $this->successResponse($mappedSlots, 'Available blocks retrieved successfully.');
     }
 }
