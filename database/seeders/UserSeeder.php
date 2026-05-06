@@ -39,6 +39,17 @@ class UserSeeder extends Seeder
                     'local_id' => $sf->id,
                 ]
             );
+
+            // Staff member for San Francisco
+            User::updateOrCreate(
+                ['email' => 'staffsf@reservation.com'],
+                [
+                    'name' => 'Staff San Francisco',
+                    'password' => bcrypt('password123'),
+                    'role' => 'staff',
+                    'local_id' => $sf->id,
+                ]
+            );
         }
 
         // Local Admin 2 (Costa del Este)
@@ -49,6 +60,17 @@ class UserSeeder extends Seeder
                     'name' => 'Admin Costa del Este',
                     'password' => bcrypt('password123'),
                     'role' => 'local_admin',
+                    'local_id' => $cde->id,
+                ]
+            );
+
+            // Staff member for Costa del Este
+            User::updateOrCreate(
+                ['email' => 'staffcde@reservation.com'],
+                [
+                    'name' => 'Staff Costa del Este',
+                    'password' => bcrypt('password123'),
+                    'role' => 'staff',
                     'local_id' => $cde->id,
                 ]
             );

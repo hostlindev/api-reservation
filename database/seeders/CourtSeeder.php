@@ -19,32 +19,32 @@ class CourtSeeder extends Seeder
 
         if ($sf) {
             Court::updateOrCreate(
-                ['local_id' => $sf->id, 'name' => 'Cancha 1 SF'],
+                ['local_id' => $sf->id, 'name' => 'Cancha Fútbol 5 A'],
                 [
-                    'category' => 'Padel Techada',
+                    'category' => 'Fútbol 5',
                     'number' => '1',
-                    'price_per_hour' => 20.00,
-                    'description' => 'Disfruta de nuestra mejor cancha techada con iluminación LED de alta intensidad.',
+                    'price_per_hour' => 30.00,
+                    'description' => 'Cancha de grama sintética ideal para partidos rápidos.',
                     'status' => 'active'
                 ]
             );
             Court::updateOrCreate(
-                ['local_id' => $sf->id, 'name' => 'Cancha 2 SF'],
+                ['local_id' => $sf->id, 'name' => 'Cancha Fútbol 5 B'],
                 [
-                    'category' => 'Padel Techada',
+                    'category' => 'Fútbol 5',
                     'number' => '2',
-                    'price_per_hour' => 20.00,
-                    'description' => 'Cancha techada premium con grama sintética de última generación.',
+                    'price_per_hour' => 30.00,
+                    'description' => 'Cancha de grama sintética con iluminación nocturna.',
                     'status' => 'active'
                 ]
             );
             Court::updateOrCreate(
-                ['local_id' => $sf->id, 'name' => 'Cancha 3 SF'],
+                ['local_id' => $sf->id, 'name' => 'Cancha Fútbol 7 Principal'],
                 [
-                    'category' => 'Padel Abierta',
+                    'category' => 'Fútbol 7',
                     'number' => '3',
-                    'price_per_hour' => 15.00,
-                    'description' => 'Cancha al aire libre bajo el sol, ideal para sesiones de entrenamiento matutinas.',
+                    'price_per_hour' => 50.00,
+                    'description' => 'Cancha amplia para 7 contra 7, grama de alta calidad.',
                     'status' => 'active'
                 ]
             );
@@ -52,22 +52,22 @@ class CourtSeeder extends Seeder
 
         if ($cde) {
             Court::updateOrCreate(
-                ['local_id' => $cde->id, 'name' => 'Cancha 1 CDE'],
+                ['local_id' => $cde->id, 'name' => 'Cancha Fútbol 11 Estadio'],
                 [
-                    'category' => 'Tenis',
+                    'category' => 'Fútbol 11',
                     'number' => '1',
-                    'price_per_hour' => 15.00,
-                    'description' => 'Cancha de tenis de arcilla profesional.',
+                    'price_per_hour' => 100.00,
+                    'description' => 'Cancha reglamentaria con medidas FIFA.',
                     'status' => 'active'
                 ]
             );
             Court::updateOrCreate(
-                ['local_id' => $cde->id, 'name' => 'Cancha 2 CDE'],
+                ['local_id' => $cde->id, 'name' => 'Cancha Fútbol 7 Auxiliar'],
                 [
-                    'category' => 'Tenis',
+                    'category' => 'Fútbol 7',
                     'number' => '2',
-                    'price_per_hour' => 15.00,
-                    'description' => 'Cancha de tenis de superficie rápida en excelentes condiciones.',
+                    'price_per_hour' => 45.00,
+                    'description' => 'Excelente drenaje y visibilidad.',
                     'status' => 'active'
                 ]
             );
