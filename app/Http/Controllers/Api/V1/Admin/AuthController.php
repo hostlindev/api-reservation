@@ -33,9 +33,9 @@ class AuthController extends Controller
         if ($user->role === 'super_admin') {
             $abilities = ['all-access'];
             $tokenName = 'OwnerToken';
-        } elseif ($user->role === 'local_admin') {
+        } elseif ($user->role === 'local_admin' || $user->role === 'staff') {
             $abilities = ['local-access'];
-            $tokenName = 'EmployeeToken';
+            $tokenName = $user->role === 'local_admin' ? 'AdminToken' : 'StaffToken';
         }
 
         $token = $user->createToken($tokenName, $abilities)->plainTextToken;

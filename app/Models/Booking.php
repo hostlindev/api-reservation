@@ -22,6 +22,7 @@ class Booking extends Model
         'email',
         'start_time',
         'end_time',
+        'total_price',
         'qr_token',
         'status',
     ];
@@ -29,6 +30,7 @@ class Booking extends Model
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'total_price' => 'decimal:2',
     ];
 
     public function court()

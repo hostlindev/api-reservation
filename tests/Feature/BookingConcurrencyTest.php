@@ -63,31 +63,28 @@ class BookingConcurrencyTest extends TestCase
         $startTime = Carbon::tomorrow()->setTime(10, 0, 0);
         $endTime = $startTime->copy()->addMinutes(60);
 
-        $result = $this->lockService->lockCourt($this->local, 'Padel Techada', $startTime, $endTime);
+        $result = $this->lockService->lockCourt($this->local, $this->court1->id, $startTime, $endTime);
 
         $this->assertNotNull($result['lock_id']);
         $this->assertDatabaseHas('booking_locks', [
             'id' => $result['lock_id'],
-            'court_id' => $this->court1->id // It should pick the first available
+            'court_id' => $this->court1->id
         ]);
     }
 
     /** @test */
-    public function it_handles_full_capacity_correctly()
+    public function it_fails_if_court_is_already_locked()
     {
         $startTime = Carbon::tomorrow()->setTime(10, 0, 0);
         $endTime = $startTime->copy()->addMinutes(60);
 
-        // Lock both courts
-        $this->lockService->lockCourt($this->local, 'Padel Techada', $startTime, $endTime);
-        $this->lockService->lockCourt($this->local, 'Padel Techada', $startTime, $endTime);
+        // Lock the court once
+        $this->lockService->lockCourt($this->local, $this->court1->id, $startTime, $endTime);
 
-        $this->assertEquals(2, BookingLock::count());
-
-        // Attempting a third lock should fail
+        // Attempting to lock the same court again should fail
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage("The selected time is full for category: Padel Techada");
+        $this->expectExceptionMessage("The selected time is currently locked by another user.");
 
-        $this->lockService->lockCourt($this->local, 'Padel Techada', $startTime, $endTime);
+        $this->lockService->lockCourt($this->local, $this->court1->id, $startTime, $endTime);
     }
 }

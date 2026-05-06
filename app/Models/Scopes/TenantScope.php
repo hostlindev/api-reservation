@@ -15,12 +15,13 @@ class TenantScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        if (Auth::check() && Auth::user()->role === 'local_admin' && Auth::user()->local_id) {
-            if ($model instanceof \App\Models\Court) {
-                $builder->where('local_id', Auth::user()->local_id);
+        $user = Auth::user();
+        if ($user && ($user->role === 'local_admin' || $user->role === 'staff') && $user->local_id) {
+            if ($model instanceof \App\Models\Court || $model instanceof \App\Models\User) {
+                $builder->where('local_id', $user->local_id);
             } elseif ($model instanceof \App\Models\Booking || $model instanceof \App\Models\BookingLock) {
-                $builder->whereHas('court', function ($query) {
-                    $query->where('local_id', Auth::user()->local_id);
+                $builder->whereHas('court', function ($query) use ($user) {
+                    $query->where('local_id', $user->local_id);
                 });
             }
         }

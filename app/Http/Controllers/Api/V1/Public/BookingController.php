@@ -60,7 +60,7 @@ class BookingController extends Controller
         try {
             $lockData = $this->lockService->lockCourt(
                 $local,
-                $request->category,
+                $request->court_id,
                 $startTime,
                 $endTime
             );

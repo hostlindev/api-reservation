@@ -22,7 +22,8 @@ class CreateLockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category' => 'required|string',
+            'court_id' => 'required|integer|exists:courts,id',
+            'category' => 'nullable|string',
             'start_time' => 'required|date_format:Y-m-d H:i|after_or_equal:now',
             'duration' => 'nullable|integer|min:30' // in minutes, defaults to min_booking_duration
         ];

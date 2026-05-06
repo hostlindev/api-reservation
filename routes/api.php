@@ -58,20 +58,26 @@ Route::prefix('v1/admin')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
 
         // Super Admin only routes (all-access)
-        // Example logic for managing locals (currently not implemented in Controller but protected here)
         Route::middleware('ability:all-access')->group(function () {
             Route::apiResource('locals', \App\Http\Controllers\Api\V1\Admin\LocalController::class);
         });
 
         // Local Admin or Super Admin routes (requires at least local-access or all-access)
         Route::middleware('ability:all-access,local-access')->group(function () {
+            // Dashboard & Finances
+            Route::get('dashboard/finances', [\App\Http\Controllers\Api\V1\Admin\DashboardController::class, 'finances']);
+
             // Courts CRUD
             Route::apiResource('courts', \App\Http\Controllers\Api\V1\Admin\CourtController::class);
+
+            // Staff Management (Local Admin only usually, but allowed for super admin too)
+            Route::apiResource('users', \App\Http\Controllers\Api\V1\Admin\UserController::class)->except(['update', 'show']);
 
             // Bookings Management
             Route::get('bookings', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'index']);
             Route::get('bookings/{booking}', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'show']);
             Route::patch('bookings/{booking}/status', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'updateStatus']);
+            Route::post('bookings/{booking}/cancel', [\App\Http\Controllers\Api\V1\Admin\BookingController::class, 'updateStatus']); // Alias for cancellation
         });
     });
 });

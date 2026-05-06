@@ -37,6 +37,9 @@ class ReservationService
 
             // 3. Create the firm booking
             $qrToken = (string) Str::uuid();
+            $court = $lock->court;
+            $durationInMinutes = $lock->start_time->diffInMinutes($lock->end_time);
+            $totalPrice = ($court->price_per_hour / 60) * $durationInMinutes;
 
             $booking = Booking::create([
                 'court_id' => $lock->court_id,
@@ -46,6 +49,7 @@ class ReservationService
                 'email' => $userData['email'],
                 'start_time' => $lock->start_time,
                 'end_time' => $lock->end_time,
+                'total_price' => $totalPrice,
                 'qr_token' => $qrToken,
                 'status' => 'confirmed',
             ]);
